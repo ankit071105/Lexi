@@ -5,9 +5,11 @@ from io import BytesIO
 import pdfplumber
 from docx import Document
 from sentence_transformers import SentenceTransformer
-import chromadb
 import re
 import google.generativeai as genai
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+import hashlib
 
 # Set page configuration
 st.set_page_config(
@@ -57,7 +59,7 @@ st.markdown("""
     .error-box {
         background: linear-gradient(135deg, #FFF5F5 0%, #FFFAF0 100%);
         padding: 1.4rem;
-                color: rgb(1, 1, 12);
+        color: rgb(1, 1, 12);
         border-radius: 12px;
         border-left: 5px solid #E53E3E;
         margin-bottom: 1.4rem;
@@ -67,7 +69,7 @@ st.markdown("""
     .info-box {
         background: linear-gradient(135deg, #EBF8FF 0%, #E6FFFA 100%);
         padding: 1.4rem;
-                color: rgb(1, 1, 12);
+        color: rgb(1, 1, 12);
         border-radius: 12px;
         border-left: 5px solid #3182CE;
         margin-bottom: 1.4rem;
@@ -78,7 +80,7 @@ st.markdown("""
         background-color: #F7FAFC;
         padding: 1.4rem;
         border-radius: 12px;
-                color: rgb(1, 1, 12);
+        color: rgb(1, 1, 12);
         font-family: 'Fira Code', monospace;
         white-space: pre-wrap;
         margin-bottom: 1.4rem;
@@ -107,7 +109,7 @@ st.markdown("""
     .uploaded-file {
         background: linear-gradient(135deg, #FFFAF0 0%, #FFF5F5 100%);
         padding: 1.2rem;
-                color: rgb(1, 1, 12);
+        color: rgb(1, 1, 12);
         border-radius: 10px;
         border-left: 5px solid #ED8936;
         margin-bottom: 1rem;
@@ -125,7 +127,7 @@ st.markdown("""
     .decision-approved {
         background: linear-gradient(135deg, #F0FFF4 0%, #C6F6D5 100%);
         padding: 1.2rem;
-                color: rgb(1, 1, 12);
+        color: rgb(1, 1, 12);
         border-radius: 10px;
         border-left: 5px solid #38A169;
         box-shadow: 0 4px 12px rgba(72, 187, 120, 0.15);
@@ -135,7 +137,7 @@ st.markdown("""
         background: linear-gradient(135deg, #FFF5F5 0%, #FED7D7 100%);
         padding: 1.2rem;
         border-radius: 10px;
-                color: rgb(1, 1, 12);
+        color: rgb(1, 1, 12);
         border-left: 5px solid #E53E3E;
         box-shadow: 0 4px 12px rgba(245, 101, 101, 0.15);
     }
@@ -143,7 +145,7 @@ st.markdown("""
     .decision-insufficient {
         background: linear-gradient(135deg, #FFFAF0 0%, #FEEBC8 100%);
         padding: 1.2rem;
-                color: rgb(1, 1, 12);
+        color: rgb(1, 1, 12);
         border-radius: 10px;
         border-left: 5px solid #DD6B20;
         box-shadow: 0 4px 12px rgba(237, 137, 54, 0.15);
@@ -153,7 +155,7 @@ st.markdown("""
         background: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%);
         padding: 1.1rem;
         border-radius: 8px;
-                color: rgb(1, 1, 12);
+        color: rgb(1, 1, 12);
         margin-bottom: 0.9rem;
         border-left: 4px solid #4299E1;
         box-shadow: 0 2px 6px rgba(0,0,0,0.03);
@@ -162,7 +164,7 @@ st.markdown("""
     .tab-content {
         padding: 1.8rem;
         border-radius: 14px;
-                color: rgb(1, 1, 12);
+        color: rgb(1, 1, 12);
         background: linear-gradient(135deg, #F7FAFC 0%, #FFFFFF 100%);
         box-shadow: 0 6px 18px rgba(0,0,0,0.05);
         border: 1px solid #E2E8F0;
@@ -172,7 +174,7 @@ st.markdown("""
         background: white;
         padding: 1.5rem;
         border-radius: 12px;
-                color: rgb(1, 1, 12);
+        color: rgb(1, 1, 12);
         box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         border: 1px solid #E2E8F0;
         transition: all 0.3s ease;
@@ -190,7 +192,7 @@ st.markdown("""
         justify-content: center;
         width: 40px;
         height: 40px;
-       background: linear-gradient(135deg, #0f0120 0%, #020c36 100%);
+        background: linear-gradient(135deg, #0f0120 0%, #020c36 100%);
         color: white;
         border-radius: 50%;
         font-weight: 700;
@@ -198,7 +200,7 @@ st.markdown("""
     }
     
     .hero-section {
-       background: linear-gradient(135deg, #0f0120 0%, #020c36 100%);
+        background: linear-gradient(135deg, #0f0120 0%, #020c36 100%);
         padding: 3rem 2rem;
         border-radius: 16px;
         color: white;
@@ -223,32 +225,26 @@ if 'processing_complete' not in st.session_state:
     st.session_state.processing_complete = False
 if 'embedding_model' not in st.session_state:
     st.session_state.embedding_model = None
-if 'chroma_collection' not in st.session_state:
-    st.session_state.chroma_collection = None
-if 'chroma_client' not in st.session_state:
-    st.session_state.chroma_client = None
+if 'document_chunks' not in st.session_state:
+    st.session_state.document_chunks = []
+if 'document_embeddings' not in st.session_state:
+    st.session_state.document_embeddings = []
+if 'document_metadata' not in st.session_state:
+    st.session_state.document_metadata = []
 
 # Your Gemini API key (hidden from users)
 GEMINI_API_KEY = "AIzaSyAETxVxx9E-bicGEjNEsXFaGSnMtleRd00"  # Replace with your actual API key
 
-# Initialize ChromaDB and model
+# Initialize embedding model
 def initialize_components():
     if st.session_state.embedding_model is None:
         with st.spinner("🧠 Loading document analysis engine..."):
             try:
                 st.session_state.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+                return True
             except Exception as e:
                 st.error(f"❌ Failed to initialize analysis engine: {str(e)}")
                 return False
-    
-    if st.session_state.chroma_client is None:
-        try:
-            st.session_state.chroma_client = chromadb.Client()
-            st.session_state.chroma_collection = st.session_state.chroma_client.get_or_create_collection("policy_docs")
-        except Exception as e:
-            st.error(f"❌ Failed to initialize document database: {str(e)}")
-            return False
-    
     return True
 
 # Text extraction functions
@@ -338,29 +334,44 @@ def embed_and_store(chunks, doc_name):
     
     try:
         embeddings = st.session_state.embedding_model.encode(chunks)
+        
         for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-            st.session_state.chroma_collection.add(
-                documents=[chunk],
-                embeddings=[embedding.tolist()],
-                ids=[f"{doc_name}_{i}"]
-            )
+            chunk_id = hashlib.md5(f"{doc_name}_{i}".encode()).hexdigest()
+            
+            st.session_state.document_chunks.append(chunk)
+            st.session_state.document_embeddings.append(embedding)
+            st.session_state.document_metadata.append({
+                "doc_name": doc_name,
+                "chunk_id": chunk_id,
+                "chunk_index": i
+            })
+        
         return True
     except Exception as e:
         st.error(f"Error processing document: {str(e)}")
         return False
 
-# Query function
+# Query function using cosine similarity
 def query_top_chunks(query, k=3):
-    if not initialize_components():
+    if not initialize_components() or not st.session_state.document_embeddings:
         return None
     
     try:
-        q_embed = st.session_state.embedding_model.encode([query])[0].tolist()
-        results = st.session_state.chroma_collection.query(
-            query_embeddings=[q_embed], 
-            n_results=k
-        )
-        return results['documents'][0] if results['documents'] else None
+        query_embedding = st.session_state.embedding_model.encode([query])[0]
+        
+        # Calculate cosine similarities
+        similarities = cosine_similarity(
+            [query_embedding], 
+            st.session_state.document_embeddings
+        )[0]
+        
+        # Get top k indices
+        top_indices = similarities.argsort()[-k:][::-1]
+        
+        # Return top chunks
+        top_chunks = [st.session_state.document_chunks[i] for i in top_indices]
+        
+        return top_chunks
     except Exception as e:
         st.error(f"Error searching documents: {str(e)}")
         return None
@@ -410,14 +421,9 @@ Return ONLY valid JSON, no additional text.
 
 # Clear all data function
 def clear_all_data():
-    try:
-        if st.session_state.chroma_client:
-            st.session_state.chroma_client = chromadb.Client()
-            st.session_state.chroma_collection = st.session_state.chroma_client.get_or_create_collection("policy_docs")
-    except:
-        st.session_state.chroma_client = None
-        st.session_state.chroma_collection = None
-    
+    st.session_state.document_chunks = []
+    st.session_state.document_embeddings = []
+    st.session_state.document_metadata = []
     st.session_state.uploaded_files = []
     st.session_state.processing_complete = False
     st.success("All data cleared successfully!")
