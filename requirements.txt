@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+sentence-transformers
+chromadb
+huggingface_hub
+pdfplumber
+python-docx

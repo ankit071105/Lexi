@@ -1,0 +1,198 @@
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .main-header {
+        font-size: 3.2rem;
+        background: linear-gradient(135deg, #0d4e83 0%, #0d299b 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+    
+    .sub-header {
+        font-size: 1.8rem;
+        color: #2D3748;
+        margin-bottom: 1.2rem;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+    
+    .success-box {
+        background: linear-gradient(135deg, #F0FFF4 0%, #E6FFFA 100%);
+        padding: 1.4rem;
+        color: rgb(1, 1, 12);
+        border-radius: 12px;
+        border-left: 5px solid #38A169;
+        margin-bottom: 1.4rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .error-box {
+        background: linear-gradient(135deg, #FFF5F5 0%, #FFFAF0 100%);
+        padding: 1.4rem;
+                color: rgb(1, 1, 12);
+        border-radius: 12px;
+        border-left: 5px solid #E53E3E;
+        margin-bottom: 1.4rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .info-box {
+        background: linear-gradient(135deg, #EBF8FF 0%, #E6FFFA 100%);
+        padding: 1.4rem;
+                color: rgb(1, 1, 12);
+        border-radius: 12px;
+        border-left: 5px solid #3182CE;
+        margin-bottom: 1.4rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .json-box {
+        background-color: #F7FAFC;
+        padding: 1.4rem;
+        border-radius: 12px;
+                color: rgb(1, 1, 12);
+        font-family: 'Fira Code', monospace;
+        white-space: pre-wrap;
+        margin-bottom: 1.4rem;
+        border: 1px solid #E2E8F0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    
+    .stButton button {
+        width: 100%;
+        background: linear-gradient(135deg, #052f6d 0%, #051935 100%);
+        color: white;
+        font-weight: 600;
+        border: none;
+        padding: 0.9rem 1.8rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.2);
+    }
+    
+    .stButton button:hover {
+        background: linear-gradient(135deg, #0051CC 0%, #003D99 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 102, 255, 0.3);
+    }
+    
+    .uploaded-file {
+        background: linear-gradient(135deg, #FFFAF0 0%, #FFF5F5 100%);
+        padding: 1.2rem;
+                color: rgb(1, 1, 12);
+        border-radius: 10px;
+        border-left: 5px solid #ED8936;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    
+    .file-icon {
+        font-size: 1.6rem;
+        margin-right: 0.9rem;
+    }
+    
+    .decision-approved {
+        background: linear-gradient(135deg, #F0FFF4 0%, #C6F6D5 100%);
+        padding: 1.2rem;
+                color: rgb(1, 1, 12);
+        border-radius: 10px;
+        border-left: 5px solid #38A169;
+        box-shadow: 0 4px 12px rgba(72, 187, 120, 0.15);
+    }
+    
+    .decision-rejected {
+        background: linear-gradient(135deg, #FFF5F5 0%, #FED7D7 100%);
+        padding: 1.2rem;
+        border-radius: 10px;
+                color: rgb(1, 1, 12);
+        border-left: 5px solid #E53E3E;
+        box-shadow: 0 4px 12px rgba(245, 101, 101, 0.15);
+    }
+    
+    .decision-insufficient {
+        background: linear-gradient(135deg, #FFFAF0 0%, #FEEBC8 100%);
+        padding: 1.2rem;
+                color: rgb(1, 1, 12);
+        border-radius: 10px;
+        border-left: 5px solid #DD6B20;
+        box-shadow: 0 4px 12px rgba(237, 137, 54, 0.15);
+    }
+    
+    .clause-box {
+        background: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%);
+        padding: 1.1rem;
+        border-radius: 8px;
+                color: rgb(1, 1, 12);
+        margin-bottom: 0.9rem;
+        border-left: 4px solid #4299E1;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    
+    .tab-content {
+        padding: 1.8rem;
+        border-radius: 14px;
+                color: rgb(1, 1, 12);
+        background: linear-gradient(135deg, #F7FAFC 0%, #FFFFFF 100%);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+        border: 1px solid #E2E8F0;
+    }
+    
+    .feature-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+                color: rgb(1, 1, 12);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        border: 1px solid #E2E8F0;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+    
+    .step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+       background: linear-gradient(135deg, #0f0120 0%, #020c36 100%);
+        color: white;
+        border-radius: 50%;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-section {
+        background: linear-gradient(135deg, #0066FF 0%, #0051CC 100%);
+        padding: 3rem 2rem;
+        border-radius: 16px;
+        color: white;
+        margin-bottom: 2.5rem;
+        text-align: center;
+    }
+    
+    .stat-box {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 1.2rem;
+        border-radius: 12px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+    }
+</style>
+""", unsafe_allow_html=True)

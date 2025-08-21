@@ -1,0 +1,2 @@
+pip3 install streamlit requests sentence-transformers chromadb pdfplumber python-docx
+streamlit run app.py
