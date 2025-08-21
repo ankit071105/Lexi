@@ -4,6 +4,8 @@ sentence-transformers
 chromadb
 huggingface-hub
 pdfplumber
+scikit-learn
+hashlib
 python-docx
 google-generativeai
 pydantic
