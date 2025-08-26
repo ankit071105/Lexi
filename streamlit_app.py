@@ -9,7 +9,7 @@ import re
 import google.generativeai as genai
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-import hashlib
+import hashlib  # This is a built-in module, no installation needed
 
 # Set page configuration
 st.set_page_config(
